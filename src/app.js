@@ -74,10 +74,15 @@ function showEvents() {
 function showItem(item) {
   var itemCard = new UI.Card({
     title: item.title,
+    subtitle: item.subtitle,
     body: item.content,
     scrollable: true
   });
 
+  itemCard.on('back', function (e) {
+    itemCard.hide();
+  });
+  
   itemCard.show();
 }
 
