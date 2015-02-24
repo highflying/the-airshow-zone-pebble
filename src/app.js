@@ -5,54 +5,117 @@
  */
 
 var UI = require('ui');
-var Vector2 = require('vector2');
+var ajax = require('ajax');
 
-var main = new UI.Card({
-  title: 'the.Airshow.zone',
-  icon: 'images/menu_icon.png',
-  subtitle: 'Events',
-  body: 'Press any button.'
+var mainMenu = new UI.Menu({
+  title: 'the Airshow Zone',
+  sections: [{
+    items: [
+      {
+        title: 'Events'
+      },
+      {
+        title: 'News'
+      }
+    ]
+  }]
 });
 
-main.show();
+mainMenu.on('select', function(e) {
+  if(e.itemIndex == 0) {
+    showEvents();
+  } else if(e.itemIndex == 1) {
+    showNews();
+  }
+});
 
-main.on('click', 'up', function(e) {
-  var menu = new UI.Menu({
-    sections: [{
-      items: [{
-        title: 'Pebble.js',
-        icon: 'images/menu_icon.png',
-        subtitle: 'Can do Menus'
-      }, {
-        title: 'Second Item',
-        subtitle: 'Subtitle Text'
-      }]
-    }]
+mainMenu.show();
+
+function showEvents() {
+  ajax(
+    {
+      url: 'http://api.airshow.zone/event',
+      type: 'json',
+      method: 'get'
+    },
+    function (data) {
+      console.log(data.results.length);
+      if(data.results) {
+        var items = [];
+        
+        for(var i in data.results) {
+          items.push({
+            title:    data.results[i].name,
+            subtitle: data.results[i].startDate + ': ' + data.results[i].location.name,
+            content:  data.results[i].description
+          });
+        }
+        
+        var menu = new UI.Menu({
+          sections: [{
+            title: 'Events',
+            items: items
+          }]
+        });
+        
+        menu.on('select', function(e) {
+          showItem(e.item);
+        });
+        
+        menu.show();
+      } 
+    },
+    function (err) {
+      console.log(err);      
+    }
+  );
+}
+
+function showItem(item) {
+  var itemCard = new UI.Card({
+    title: item.title,
+    body: item.content,
+    scrollable: true
   });
-  menu.on('select', function(e) {
-    console.log('Selected item #' + e.itemIndex + ' of section #' + e.sectionIndex);
-    console.log('The item is titled "' + e.item.title + '"');
-  });
-  menu.show();
-});
 
-main.on('click', 'select', function(e) {
-  var wind = new UI.Window();
-  var textfield = new UI.Text({
-    position: new Vector2(0, 50),
-    size: new Vector2(144, 30),
-    font: 'gothic-24-bold',
-    text: 'Text Anywhere!',
-    textAlign: 'center'
-  });
-  wind.add(textfield);
-  wind.show();
-});
+  itemCard.show();
+}
 
-main.on('click', 'down', function(e) {
-  var card = new UI.Card();
-  card.title('A Card');
-  card.subtitle('Is a Window');
-  card.body('The simplest window type in Pebble.js.');
-  card.show();
-});
+function showNews() {
+  ajax(
+    {
+      url: 'http://api.airshow.zone/news',
+      type: 'json',
+      method: 'get'
+    },
+    function (data) {
+      if(data.results) {
+        var items = [];
+        
+        for(var i in data.results) {
+          items.push({
+            title:    data.results[i].title,
+            subtitle: data.results[i].date,
+            content:  data.results[i].content
+          });
+        }
+        
+        var menu = new UI.Menu({
+          sections: [{
+            title: 'News',
+            items: items
+          }]
+        });
+        
+        menu.on('select', function (e) {
+          showItem(e.item);
+        });
+        
+        menu.show();
+      } 
+    },
+    function (err) {
+      console.log(err);      
+    }
+  );
+}
